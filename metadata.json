@@ -1,0 +1,6 @@
+{
+  "name": "Jubiler Wołoska — Pracownia Jubilerska",
+  "description": "Minimalistyczna pracownia jubilerska w Warszawie (ul. Wołoska / Odyńca, pawilon 7). Galeria pierścionków i naszyjników, cennik, indywidualna wycena, dojazd Google Maps i powiadomienia push.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#18181B" />
+  <rect x="36" y="36" width="440" height="440" fill="none" stroke="#8C6D3F" stroke-width="3" opacity="0.55" />
+  <polygon points="256,112 344,184 256,288 168,184" fill="none" stroke="#D4B483" stroke-width="10" stroke-linejoin="round" />
+  <line x1="168" y1="184" x2="344" y2="184" stroke="#D4B483" stroke-width="8" />
+  <polyline points="208,184 256,112 304,184" fill="none" stroke="#D4B483" stroke-width="6" stroke-linejoin="round" />
+  <line x1="256" y1="184" x2="256" y2="288" stroke="#D4B483" stroke-width="6" />
+  <text x="256" y="388" text-anchor="middle" font-family="Georgia, serif" font-size="68" letter-spacing="10" fill="#FAF9F6">JW</text>
+</svg>
