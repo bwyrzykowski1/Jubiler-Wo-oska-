@@ -4,8 +4,11 @@ import path from 'path';
 import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
+const BASE_PATH = '/Jubiler-Wo-oska-/';
+
 export default defineConfig(() => {
   return {
+    base: BASE_PATH,
     plugins: [
       react(),
       tailwindcss(),
@@ -13,7 +16,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['apple-touch-icon.png', 'icon.svg', 'sw-push.js'],
         manifest: {
-          id: '/',
+          id: BASE_PATH,
           name: 'Jubiler Wołoska — Pracownia Jubilerska',
           short_name: 'Wołoska',
           description:
@@ -21,23 +24,23 @@ export default defineConfig(() => {
           theme_color: '#FAF9F6',
           background_color: '#FAF9F6',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: BASE_PATH,
+          scope: BASE_PATH,
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: `${BASE_PATH}pwa-192x192.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.png',
+              src: `${BASE_PATH}pwa-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-maskable-512x512.png',
+              src: `${BASE_PATH}pwa-maskable-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
@@ -46,7 +49,7 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,woff,woff2}'],
-          importScripts: ['/sw-push.js'],
+          importScripts: [`${BASE_PATH}sw-push.js`],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
