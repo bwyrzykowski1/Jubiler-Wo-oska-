@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { isBackendAvailable } from '../lib/workshopClient';
 
 export interface PushNotificationPreview {
   title: string;
@@ -13,6 +14,23 @@ export interface Announcement {
   category: string;
   publishedAt: string;
 }
+
+const DEFAULT_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: 'news-2026-11-solitaire',
+    title: 'Nowość: Pierścionek Soliter „Mokotów” w złocie 585',
+    body: 'W pracowni przy ul. Wołoskiej pojawił się nowy wzór zaręczynowy z certyfikowanym brylantem 0,55 ct w ręcznie kutej oprawie.',
+    category: 'Pierścionki',
+    publishedAt: '2026-11-12',
+  },
+  {
+    id: 'news-2026-11-tanzanit',
+    title: 'Nowa kolekcja naszyjników z tanzanitami i szmaragdami',
+    body: 'Limitowana seria autorskich zawieszek z kamieniami kolekcjonerskimi w białym i żółtym złocie 585.',
+    category: 'Naszyjniki',
+    publishedAt: '2026-11-08',
+  },
+];
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -39,7 +57,7 @@ export function usePushNotifications() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activeAlert, setActiveAlert] = useState<PushNotificationPreview | null>(null);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(DEFAULT_ANNOUNCEMENTS);
   const [endpoint, setEndpoint] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,16 +76,17 @@ export function usePushNotifications() {
       // Ignore storage errors
     }
 
-    fetch('/api/announcements')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.announcements) {
-          setAnnouncements(data.announcements);
-        }
-      })
-      .catch(() => {
-        // Ignore offline initial fetch failure
-      });
+    isBackendAvailable().then((hasBackend) => {
+      if (!hasBackend) return;
+      fetch('./api/announcements')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.announcements) {
+            setAnnouncements(data.announcements);
+          }
+        })
+        .catch(() => {});
+    });
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready
@@ -78,9 +97,7 @@ export function usePushNotifications() {
             setEndpoint(existing.endpoint);
           }
         })
-        .catch(() => {
-          // Ignore SW readiness issue
-        });
+        .catch(() => {});
     }
   }, []);
 
@@ -128,8 +145,15 @@ export function usePushNotifications() {
         return false;
       }
 
+      const hasBackend = await isBackendAvailable();
       let registeredPush = false;
-      if ('serviceWorker' in navigator && 'PushManager' in window && currentPermission === 'granted') {
+
+      if (
+        hasBackend &&
+        'serviceWorker' in navigator &&
+        'PushManager' in window &&
+        currentPermission === 'granted'
+      ) {
         try {
           const registration = await Promise.race([
             navigator.serviceWorker.ready,
@@ -137,7 +161,7 @@ export function usePushNotifications() {
           ]);
 
           if (registration && registration.pushManager) {
-            const keyRes = await fetch('/api/push/vapid-public-key');
+            const keyRes = await fetch('./api/push/vapid-public-key');
             if (keyRes.ok) {
               const { publicKey } = (await keyRes.json()) as { publicKey: string };
               const convertedKey = urlBase64ToUint8Array(publicKey);
@@ -149,7 +173,7 @@ export function usePushNotifications() {
                 });
               }
 
-              const subRes = await fetch('/api/push/subscribe', {
+              const subRes = await fetch('./api/push/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -165,22 +189,18 @@ export function usePushNotifications() {
             }
           }
         } catch {
-          // Embedded iframe or unsupported PushManager falls back cleanly
+          // Graceful fallback
         }
       }
 
       setIsSubscribed(true);
       persistPrefs(true, selectedTopics);
 
-      if (registeredPush) {
-        setStatusMessage(
-          'Subskrypcja powiadomień push została aktywowana. Będziesz otrzymywać informacje o nowych pierścionkach i naszyjnikach.'
-        );
-      } else {
-        setStatusMessage(
-          'Powiadomienia o nowościach zostały włączone dla tej przeglądarki.'
-        );
-      }
+      setStatusMessage(
+        registeredPush
+          ? 'Subskrypcja powiadomień push została aktywowana. Będziesz otrzymywać informacje o nowych pierścionkach i naszyjnikach.'
+          : 'Powiadomienia o nowościach zostały włączone dla tej przeglądarki.'
+      );
       return true;
     } finally {
       setIsLoading(false);
@@ -198,11 +218,13 @@ export function usePushNotifications() {
         ]);
         const sub = await registration?.pushManager?.getSubscription();
         if (sub) {
-          await fetch('/api/push/unsubscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint: sub.endpoint }),
-          }).catch(() => {});
+          if (await isBackendAvailable()) {
+            await fetch('./api/push/unsubscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            }).catch(() => {});
+          }
           await sub.unsubscribe();
         }
       }
@@ -220,25 +242,30 @@ export function usePushNotifications() {
     setStatusMessage(null);
 
     try {
-      const res = await fetch('/api/push/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          endpoint: endpoint || undefined,
-          title: 'Jubiler Wołoska — Nowy wzór w pracowni',
-          message: `Nowość w kategorii ${selectedTopics.join(', ')}: Soliter „Mokotów” w złocie 585 z certyfikowanym brylantem.`,
-        }),
-      });
+      let title = 'Jubiler Wołoska — Nowy wzór w pracowni';
+      let body = `Nowość w kategorii ${selectedTopics.join(', ')}: Soliter „Mokotów” w złocie 585 z certyfikowanym brylantem.`;
+      let delivered = 0;
 
-      const data = (await res.json()) as {
-        delivered?: number;
-        payload?: { title: string; body: string };
-      };
-
-      const title = data?.payload?.title || 'Jubiler Wołoska — Nowość w ofercie';
-      const body =
-        data?.payload?.body ||
-        'W pracowni pojawiły się nowe ręcznie kute pierścionki i naszyjniki.';
+      if (await isBackendAvailable()) {
+        const res = await fetch('./api/push/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: endpoint || undefined,
+            title,
+            message: body,
+          }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as {
+            delivered?: number;
+            payload?: { title: string; body: string };
+          };
+          delivered = data?.delivered || 0;
+          title = data?.payload?.title || title;
+          body = data?.payload?.body || body;
+        }
+      }
 
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         if ('serviceWorker' in navigator) {
@@ -246,12 +273,14 @@ export function usePushNotifications() {
             navigator.serviceWorker.ready,
             new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200)),
           ]);
-          if (reg && (!data.delivered || data.delivered === 0)) {
+          if (reg && delivered === 0) {
             await reg.showNotification(title, {
               body,
-              icon: '/pwa-192x192.png',
+              icon: './pwa-192x192.png',
               tag: 'jubiler-woloska-preview',
             });
+          } else if (!reg && delivered === 0) {
+            new Notification(title, { body, icon: './pwa-192x192.png' });
           }
         }
       }

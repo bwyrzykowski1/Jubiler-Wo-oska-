@@ -3,6 +3,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { GEMSTONE_TYPES, PRECIOUS_METALS } from '../data/jewelry';
 import type { JewelryPiece } from '../data/jewelry';
 import type { ServicePriceItem } from '../data/workshop';
+import { submitInquiryData } from '../lib/workshopClient';
 
 interface PricingAndQuoteViewProps {
   servicePrices: ServicePriceItem[];
@@ -60,34 +61,29 @@ export const PricingAndQuoteView: React.FC<PricingAndQuoteViewProps> = ({
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/inquiries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          phone,
-          email,
-          category,
-          metal,
-          gemstone,
-          sizeOrLength,
-          budget,
-          referencePiece,
-          notes,
-        }),
+      const result = await submitInquiryData({
+        name,
+        phone,
+        email,
+        category,
+        metal,
+        gemstone,
+        sizeOrLength,
+        budget,
+        referencePiece,
+        notes,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data?.error || 'Nie udało się zapisać zapytania.');
+      if (!result.ok || !result.inquiryId) {
+        setErrorMessage(result.error || 'Nie udało się zapisać zapytania.');
         return;
       }
 
       setSubmittedReceipt({
-        inquiryId: data.inquiryId,
-        category: data.summary?.category || category,
-        metal: data.summary?.metal || metal,
-        gemstone: data.summary?.gemstone || gemstone,
+        inquiryId: result.inquiryId,
+        category,
+        metal,
+        gemstone,
       });
       onClearPrefill();
       setName('');

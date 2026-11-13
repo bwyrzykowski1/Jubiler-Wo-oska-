@@ -17,13 +17,19 @@ import { DEFAULT_SITE_CONTENT } from './data/workshop';
 import type { SiteContent } from './data/workshop';
 import { useDocumentMeta } from './hooks/useDocumentMeta';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import {
+  isBackendAvailable,
+  loadCatalogData,
+  loadSiteContentData,
+} from './lib/workshopClient';
 
 export default function App() {
   const [activeTab, setActiveTabState] = useState<AppTab>(() =>
     typeof window !== 'undefined'
-      ? resolveTabFromPathname(window.location.pathname)
+      ? resolveTabFromPathname(window.location.pathname, window.location.hash)
       : 'galeria'
   );
+  const [hasBackend, setHasBackend] = useState<boolean | null>(null);
   const [prefilledPiece, setPrefilledPiece] = useState<JewelryPiece | null>(null);
   const [products, setProducts] = useState<JewelryPiece[]>(JEWELRY_COLLECTION);
   const [siteContent, setSiteContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
@@ -35,46 +41,50 @@ export default function App() {
   const push = usePushNotifications();
   useDocumentMeta(activeTab);
 
-  const selectTab = useCallback((tab: AppTab) => {
-    setActiveTabState(tab);
-    const targetPath = TAB_SEO_METADATA[tab]?.path || '/';
-    if (window.location.pathname !== targetPath) {
-      window.history.pushState({ tab }, '', targetPath);
-    }
+  useEffect(() => {
+    isBackendAvailable().then((available) => setHasBackend(available));
   }, []);
+
+  const selectTab = useCallback(
+    (tab: AppTab) => {
+      setActiveTabState(tab);
+      if (hasBackend) {
+        const targetPath = TAB_SEO_METADATA[tab]?.path || '/';
+        if (window.location.pathname !== targetPath) {
+          window.history.pushState({ tab }, '', targetPath);
+        }
+      } else {
+        const targetHash = tab === 'galeria' ? '' : `#${tab}`;
+        if (window.location.hash !== targetHash) {
+          window.history.pushState({ tab }, '', targetHash || window.location.pathname);
+        }
+      }
+    },
+    [hasBackend]
+  );
 
   useEffect(() => {
     const handlePopState = () => {
-      setActiveTabState(resolveTabFromPathname(window.location.pathname));
+      setActiveTabState(
+        resolveTabFromPathname(window.location.pathname, window.location.hash)
+      );
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const loadCatalog = useCallback(async () => {
-    try {
-      const res = await fetch('/api/products');
-      if (!res.ok) return;
-      const data = (await res.json()) as { products?: JewelryPiece[] };
-      if (Array.isArray(data.products)) {
-        setProducts(data.products);
-      }
-    } catch {
-      // Fallback to built-in catalog when offline
-    }
+    const items = await loadCatalogData();
+    setProducts(items);
   }, []);
 
   const loadSiteContent = useCallback(async () => {
-    try {
-      const res = await fetch('/api/site-content');
-      if (!res.ok) return;
-      const data = (await res.json()) as SiteContent;
-      if (data?.workshopInfo && data?.servicePrices) {
-        setSiteContent(data);
-      }
-    } catch {
-      // Fallback to defaults when offline
-    }
+    const content = await loadSiteContentData();
+    setSiteContent(content);
   }, []);
 
   useEffect(() => {
@@ -193,7 +203,6 @@ export default function App() {
         onSiteContentUpdated={(next) => setSiteContent(next)}
       />
 
-      {/* Live Push Notification Preview Toast */}
       {push.activeAlert && (
         <div
           role="status"
@@ -219,7 +228,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Offline Connectivity Notice */}
       {!isOnline && (
         <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 border border-[#18181B] bg-[#18181B] px-3.5 py-2 text-xs font-medium text-white shadow-lg">
           <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />

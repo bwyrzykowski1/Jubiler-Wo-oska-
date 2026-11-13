@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveMediaUrl } from '../data/mediaAssets';
 import type { AboutContent } from '../data/workshop';
 
 interface AboutViewProps {
@@ -50,7 +51,7 @@ export const AboutView: React.FC<AboutViewProps> = ({
         <div className="lg:col-span-6">
           <div className="aspect-[4/3] lg:h-full w-full overflow-hidden border border-[#E6E2D8] bg-[#F3F1EC]">
             <img
-              src={aboutContent.image}
+              src={resolveMediaUrl(aboutContent.image)}
               alt="Mistrz złotnik przy stole warsztatowym w pracowni Jubiler Wołoska"
               referrerPolicy="no-referrer"
               className="h-full w-full object-cover"

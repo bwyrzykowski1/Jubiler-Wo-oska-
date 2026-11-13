@@ -760,7 +760,8 @@ async function createApp() {
       .replace(
         /<meta\s+name="twitter:image"[^>]*>/i,
         `<meta name="twitter:image" content="${escapeHtmlAttr(ogImageUrl)}" />`
-      );
+      )
+      .replace(/(href|src)="\.\//gi, '$1="/');
   };
 
   app.get('/robots.txt', (req: Request, res: Response) => {

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Bell,
+  Download,
   ImagePlus,
+  KeyRound,
   Lock,
   LogOut,
   Pencil,
@@ -18,22 +20,22 @@ import type {
   PreciousMetal,
   ProductCategory,
 } from '../data/jewelry';
+import { resolveMediaUrl } from '../data/mediaAssets';
 import type { ServicePriceItem, SiteContent } from '../data/workshop';
+import {
+  deleteOwnerInquiryData,
+  deleteProductData,
+  isBackendAvailable,
+  loadOwnerInquiriesData,
+  restoreDefaultProductsData,
+  saveProductData,
+  saveSiteContentData,
+  updateStaticOwnerPin,
+  verifyOwnerPin,
+} from '../lib/workshopClient';
+import type { ClientInquiry } from '../lib/workshopClient';
 
-interface OwnerInquiry {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  category: string;
-  metal: string;
-  gemstone: string;
-  budget: string;
-  sizeOrLength: string;
-  referencePiece: string;
-  notes: string;
-  createdAt: string;
-}
+type OwnerInquiry = ClientInquiry;
 
 interface OwnerPanelModalProps {
   isOpen: boolean;
@@ -131,6 +133,9 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
   const [heroImageUpload, setHeroImageUpload] = useState<string | null>(null);
   const [aboutImageUpload, setAboutImageUpload] = useState<string | null>(null);
 
+  const [backendMode, setBackendMode] = useState<'server' | 'static' | null>(null);
+  const [newStaticPin, setNewStaticPin] = useState('');
+
   // Inquiries & Push Broadcast
   const [inquiries, setInquiries] = useState<OwnerInquiry[]>([]);
   const [loadingInquiries, setLoadingInquiries] = useState(false);
@@ -143,17 +148,17 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
   }, [siteContent, isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    isBackendAvailable().then((hasBackend) => {
+      setBackendMode(hasBackend ? 'server' : 'static');
+    });
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen && verifiedPin && activeTab === 'zapytania') {
       setLoadingInquiries(true);
-      fetch('/api/owner/inquiries', {
-        headers: { 'x-owner-pin': verifiedPin },
-      })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.inquiries) {
-            setInquiries(data.inquiries);
-          }
-        })
+      loadOwnerInquiriesData(verifiedPin)
+        .then((items) => setInquiries(items))
         .catch(() => {})
         .finally(() => setLoadingInquiries(false));
     }
@@ -171,14 +176,10 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     setAuthError(null);
     setCheckingPin(true);
     try {
-      const res = await fetch('/api/owner/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setAuthError(data?.error || 'Nieprawidłowy kod dostępu.');
+      const result = await verifyOwnerPin(pin);
+      setBackendMode(result.mode);
+      if (!result.valid) {
+        setAuthError(result.error || 'Nieprawidłowy kod dostępu.');
         return;
       }
       const cleanPin = pin.trim();
@@ -186,7 +187,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
       sessionStorage.setItem(PIN_SESSION_KEY, cleanPin);
       setPin('');
     } catch {
-      setAuthError('Błąd połączenia z serwerem pracowni.');
+      setAuthError('Nie udało się zweryfikować kodu PIN.');
     } finally {
       setCheckingPin(false);
     }
@@ -196,6 +197,39 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     sessionStorage.removeItem(PIN_SESSION_KEY);
     setVerifiedPin(null);
     clearMessages();
+  };
+
+  const handleChangeStaticPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
+    const clean = newStaticPin.trim();
+    if (clean.length < 4) {
+      setErrorMsg('Nowy kod PIN powinien mieć co najmniej 4 znaki.');
+      return;
+    }
+    updateStaticOwnerPin(clean);
+    setVerifiedPin(clean);
+    sessionStorage.setItem(PIN_SESSION_KEY, clean);
+    setNewStaticPin('');
+    setFeedback('Zaktualizowano lokalny kod PIN w tej przeglądarce.');
+  };
+
+  const handleExportBackup = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      products,
+      siteContent,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `jubiler-woloska-kopia-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setFeedback('Pobrano plik kopii zapasowej JSON (katalog i treść strony).');
   };
 
   const resetProductForm = () => {
@@ -245,38 +279,25 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
     setSaving(true);
     try {
-      const url = isEditing
-        ? `/api/products/${encodeURIComponent(editingId)}`
-        : '/api/products';
-      const method = isEditing ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-owner-pin': verifiedPin,
-        },
-        body: JSON.stringify({
-          name: prodName,
-          category: prodCategory,
-          metal: prodMetal,
-          gemstone: prodGemstone,
-          gemstoneSpecs: prodSpecs || prodGemstone,
-          weightGrams: prodWeight || '—',
-          pricePLN: Number(prodPrice),
-          leadTime: prodLeadTime,
-          availability: prodAvailability,
-          shortNote: prodNote,
-          craftDetails: prodNote,
-          imageDataUrl: prodImageDataUrl || undefined,
-          sendPush: !isEditing && sendPushOnNew,
-        }),
+      const result = await saveProductData(verifiedPin, isEditing ? editingId : null, {
+        name: prodName,
+        category: prodCategory,
+        metal: prodMetal,
+        gemstone: prodGemstone,
+        gemstoneSpecs: prodSpecs || prodGemstone,
+        weightGrams: prodWeight || '—',
+        pricePLN: Number(prodPrice),
+        leadTime: prodLeadTime,
+        availability: prodAvailability,
+        shortNote: prodNote,
+        craftDetails: prodNote,
+        imageDataUrl: prodImageDataUrl || undefined,
+        sendPush: !isEditing && sendPushOnNew,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 401) handleLogout();
-        setErrorMsg(data?.error || 'Nie udało się zapisać zmian w wyrobie.');
+      if (!result.ok) {
+        if (result.unauthorized) handleLogout();
+        setErrorMsg(result.error || 'Nie udało się zapisać zmian w wyrobie.');
         return;
       }
 
@@ -289,7 +310,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
       resetProductForm();
       setCatalogSubTab('list');
     } catch {
-      setErrorMsg('Błąd połączenia z serwerem.');
+      setErrorMsg('Nie udało się zapisać zmian w katalogu.');
     } finally {
       setSaving(false);
     }
@@ -298,29 +319,19 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
   const handleDeleteProduct = async (id: string) => {
     if (!verifiedPin) return;
     clearMessages();
-    const res = await fetch(`/api/products/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: { 'x-owner-pin': verifiedPin },
-    });
-    if (res.ok) {
+    const ok = await deleteProductData(verifiedPin, id);
+    if (ok) {
       await onCatalogUpdated();
       setFeedback('Usunięto wzór z galerii.');
-    } else if (res.status === 401) {
-      handleLogout();
     }
   };
 
   const handleRestoreDefaultProducts = async () => {
     if (!verifiedPin) return;
     clearMessages();
-    const res = await fetch('/api/products/restore-defaults', {
-      method: 'POST',
-      headers: { 'x-owner-pin': verifiedPin },
-    });
-    if (res.ok) {
-      await onCatalogUpdated();
-      setFeedback('Przywrócono brakujące wzory domyślne.');
-    }
+    await restoreDefaultProductsData(verifiedPin);
+    await onCatalogUpdated();
+    setFeedback('Przywrócono brakujące wzory domyślne.');
   };
 
   const saveSiteContent = async (
@@ -334,26 +345,20 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     clearMessages();
     setSaving(true);
     try {
-      const res = await fetch('/api/site-content', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-owner-pin': verifiedPin,
-        },
-        body: JSON.stringify(patch),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 401) handleLogout();
-        setErrorMsg(data?.error || 'Nie udało się zapisać zmian.');
+      const result = await saveSiteContentData(verifiedPin, patch);
+      if (!result.ok) {
+        if (result.unauthorized) handleLogout();
+        setErrorMsg(result.error || 'Nie udało się zapisać zmian.');
         return;
       }
-      onSiteContentUpdated(data.siteContent);
+      if (result.siteContent) {
+        onSiteContentUpdated(result.siteContent);
+      }
       setHeroImageUpload(null);
       setAboutImageUpload(null);
       setFeedback(successLabel);
     } catch {
-      setErrorMsg('Błąd połączenia z serwerem.');
+      setErrorMsg('Nie udało się zapisać zmian.');
     } finally {
       setSaving(false);
     }
@@ -403,20 +408,33 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     clearMessages();
     setSaving(true);
     try {
-      const res = await fetch('/api/push/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: pushTitle,
-          message: pushMessage,
-          category: pushCategory,
-          publishAnnouncement: true,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      if (await isBackendAvailable()) {
+        const res = await fetch('./api/push/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: pushTitle,
+            message: pushMessage,
+            category: pushCategory,
+            publishAnnouncement: true,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setFeedback(
+            `Opublikowano ogłoszenie i wysłano powiadomienie push (dostarczono do ${data.delivered ?? 0} urządzeń).`
+          );
+          setPushMessage('');
+        }
+      } else {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification(pushTitle, {
+            body: pushMessage,
+            icon: './pwa-192x192.png',
+          });
+        }
         setFeedback(
-          `Opublikowano ogłoszenie i wysłano powiadomienie push (dostarczono do ${data.delivered ?? 0} urządzeń).`
+          'W trybie statycznym (GitHub Pages) podgląd powiadomienia działa wyłącznie lokalnie — wysyłka do wszystkich subskrybentów wymaga serwera Node.js.'
         );
         setPushMessage('');
       }
@@ -429,13 +447,8 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
 
   const handleDeleteInquiry = async (id: string) => {
     if (!verifiedPin) return;
-    const res = await fetch(`/api/owner/inquiries/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: { 'x-owner-pin': verifiedPin },
-    });
-    if (res.ok) {
-      setInquiries((prev) => prev.filter((item) => item.id !== id));
-    }
+    await deleteOwnerInquiryData(verifiedPin, id);
+    setInquiries((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
@@ -549,6 +562,50 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
               ))}
             </div>
 
+            {backendMode === 'static' && (
+              <div className="mt-4 border border-[#E6E2D8] bg-white p-4 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <p className="text-xs text-[#57534E] leading-relaxed max-w-2xl">
+                    <strong className="text-[#18181B]">Tryb statyczny (GitHub Pages):</strong>{' '}
+                    zmiany zapisują się w pamięci tej przeglądarki (IndexedDB). Aby opublikować
+                    zmiany globalnie dla wszystkich klientów, uruchom aplikację z serwerem Node.js
+                    lub pobierz kopię JSON.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleExportBackup}
+                    className="inline-flex items-center gap-1.5 border border-[#E6E2D8] bg-[#FAF9F6] px-3 py-1.5 text-xs font-medium text-[#18181B] hover:border-[#18181B] shrink-0 cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    Pobierz kopię JSON
+                  </button>
+                </div>
+                <form
+                  onSubmit={handleChangeStaticPin}
+                  className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#E6E2D8]"
+                >
+                  <KeyRound className="h-3.5 w-3.5 text-[#735830] shrink-0" aria-hidden="true" />
+                  <label htmlFor="static-pin-change" className="text-xs text-[#57534E]">
+                    Zmień PIN w tej przeglądarce:
+                  </label>
+                  <input
+                    id="static-pin-change"
+                    type="password"
+                    value={newStaticPin}
+                    onChange={(e) => setNewStaticPin(e.target.value)}
+                    placeholder="Nowy PIN (min. 4 znaki)"
+                    className="h-8 border border-[#E6E2D8] bg-[#FAF9F6] px-2.5 text-xs text-[#18181B]"
+                  />
+                  <button
+                    type="submit"
+                    className="border border-[#18181B] bg-[#18181B] px-3 py-1 text-xs font-medium text-white hover:bg-[#27272A] cursor-pointer"
+                  >
+                    Zapisz PIN
+                  </button>
+                </form>
+              </div>
+            )}
+
             {feedback && (
               <p className="mt-4 border border-[#E6E2D8] bg-white px-4 py-2.5 text-xs text-[#18181B]">
                 {feedback}
@@ -619,7 +676,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
                           <img
-                            src={item.image}
+                            src={resolveMediaUrl(item.image)}
                             alt={item.name}
                             className="h-14 w-16 object-cover bg-[#F3F1EC] shrink-0"
                           />
@@ -661,7 +718,10 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                         <label className="flex h-36 w-full sm:w-48 cursor-pointer flex-col items-center justify-center border border-dashed border-[#8C6D3F] bg-white p-2 text-center hover:bg-[#F3F1EC]">
                           {prodImageDataUrl || prodCurrentImage ? (
                             <img
-                              src={prodImageDataUrl || prodCurrentImage || ''}
+                              src={
+                                prodImageDataUrl ||
+                                (prodCurrentImage ? resolveMediaUrl(prodCurrentImage) : '')
+                              }
                               alt="Podgląd zdjęcia"
                               className="h-full w-full object-cover"
                             />

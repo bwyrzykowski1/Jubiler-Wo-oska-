@@ -73,11 +73,18 @@ export const TAB_SEO_METADATA: Record<SeoTabId, TabSeoMetadata> = {
   },
 };
 
-export function resolveTabFromPathname(pathname: string): SeoTabId {
+export function resolveTabFromPathname(pathname: string, hash = ''): SeoTabId {
+  const cleanHash = hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+  if (cleanHash === 'o-pracowni') return 'o-pracowni';
+  if (cleanHash === 'cennik') return 'cennik';
+  if (cleanHash === 'dojazd') return 'dojazd';
+  if (cleanHash === 'kontakt') return 'kontakt';
+  if (cleanHash === 'galeria') return 'galeria';
+
   const clean = pathname.replace(/\/+$/, '') || '/';
-  if (clean === '/o-pracowni') return 'o-pracowni';
-  if (clean === '/cennik') return 'cennik';
-  if (clean === '/dojazd') return 'dojazd';
-  if (clean === '/kontakt') return 'kontakt';
+  if (clean.endsWith('/o-pracowni')) return 'o-pracowni';
+  if (clean.endsWith('/cennik')) return 'cennik';
+  if (clean.endsWith('/dojazd')) return 'dojazd';
+  if (clean.endsWith('/kontakt')) return 'kontakt';
   return 'galeria';
 }

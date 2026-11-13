@@ -11,6 +11,7 @@ import type {
   PreciousMetal,
   ProductCategory,
 } from '../data/jewelry';
+import { resolveMediaUrl } from '../data/mediaAssets';
 import type { HeroContent } from '../data/workshop';
 
 interface GalleryViewProps {
@@ -117,7 +118,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
               <div className="aspect-[16/9] lg:h-full w-full overflow-hidden bg-[#F3F1EC] border border-[#E6E2D8]">
                 {!failedImages['hero'] ? (
                   <img
-                    src={heroContent.image}
+                    src={resolveMediaUrl(heroContent.image)}
                     alt="Złoty pierścionek z diamentem i delikatny naszyjnik z pracowni Jubiler Wołoska"
                     referrerPolicy="no-referrer"
                     onError={() => setFailedImages((prev) => ({ ...prev, hero: true }))}
@@ -278,7 +279,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
                   <div className="aspect-[4/3] w-full overflow-hidden bg-[#F3F1EC]">
                     {!failedImages[piece.id] ? (
                       <img
-                        src={piece.image}
+                        src={resolveMediaUrl(piece.image)}
                         alt={`${piece.name} — ${piece.metal}, ${piece.gemstone}`}
                         referrerPolicy="no-referrer"
                         onError={() => setFailedImages((prev) => ({ ...prev, [piece.id]: true }))}
@@ -343,7 +344,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
               <div className="bg-[#F3F1EC] md:col-span-6">
                 <div className="aspect-[4/3] md:h-full w-full">
                   <img
-                    src={activePiece.image}
+                    src={resolveMediaUrl(activePiece.image)}
                     alt={activePiece.name}
                     referrerPolicy="no-referrer"
                     className="h-full w-full object-cover"

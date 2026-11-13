@@ -25,8 +25,12 @@ function upsertCanonicalLink(href: string): void {
 export function useDocumentMeta(activeTab: SeoTabId): void {
   useEffect(() => {
     const meta = TAB_SEO_METADATA[activeTab] || TAB_SEO_METADATA.galeria;
-    const canonicalUrl = `${window.location.origin}${meta.path}`;
-    const ogImageUrl = `${window.location.origin}/og-cover.jpg`;
+    const basePageUrl = window.location.href.split('#')[0];
+    const canonicalUrl =
+      window.location.hash && activeTab !== 'galeria'
+        ? `${basePageUrl}#${activeTab}`
+        : basePageUrl;
+    const ogImageUrl = new URL('./og-cover.jpg', basePageUrl).href;
 
     document.title = meta.title;
     upsertMetaTag('name', 'description', meta.description);
