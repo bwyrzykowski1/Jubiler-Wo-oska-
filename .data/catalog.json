@@ -1,5 +1,37 @@
 [
   {
+    "id": "local-1794638125069",
+    "name": "Est",
+    "category": "Pierścionki",
+    "metal": "Złoto żółte 585",
+    "gemstone": "Diament / Brylant",
+    "gemstoneSpecs": "Diament / Brylant",
+    "weightGrams": "—",
+    "pricePLN": 2222,
+    "leadTime": "10–14 dni roboczych",
+    "availability": "Dostępny w pracowni",
+    "image": "/src/assets/images/est_local_1794638125069.jpg",
+    "shortNote": "Autorski wyrób wykonany ręcznie w pracowni.",
+    "craftDetails": "Autorski wyrób wykonany ręcznie.",
+    "isNew": true
+  },
+  {
+    "id": "soliter-mokotow-585",
+    "name": "Soliter „Mokotów” z brylantem",
+    "category": "Zaręczynowe",
+    "metal": "Złoto żółte 585",
+    "gemstone": "Diament / Brylant",
+    "gemstoneSpecs": "Brylant 0,55 ct · czystość VS1 · barwa F · certyfikat GIA",
+    "weightGrams": "3,40 g",
+    "pricePLN": 7400,
+    "leadTime": "10–14 dni roboczych",
+    "availability": "Dostępny w pracowni",
+    "image": "/src/assets/images/ring_diamond_gold_1794550927289.jpg",
+    "shortNote": "Klasyczna czterokrapowa korona osadzona na smukłej, ręcznie kutej szynie.",
+    "craftDetails": "Szyna wykuta ręcznie z litego złota próby 585 o subtelnym przekroju soczewkowym dla codziennej wygody noszenia. Wysoko otwarta korona wpuszcza światło pod każdym kątem.",
+    "isNew": true
+  },
+  {
     "id": "ceylon-sapphire-pt950",
     "name": "Pierścionek „Odyńca” z szafirem cejlońskim",
     "category": "Zaręczynowe",

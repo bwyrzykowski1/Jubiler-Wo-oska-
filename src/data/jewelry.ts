@@ -63,6 +63,22 @@ export const WORKSHOP_BENCH_IMAGE = '/src/assets/images/atelier_craft_bench_1794
 
 export const JEWELRY_COLLECTION: JewelryPiece[] = [
   {
+    id: 'local-1794638125069',
+    name: 'Est',
+    category: 'Pierścionki',
+    metal: 'Złoto żółte 585',
+    gemstone: 'Diament / Brylant',
+    gemstoneSpecs: 'Diament / Brylant',
+    weightGrams: '—',
+    pricePLN: 2222,
+    leadTime: '10–14 dni roboczych',
+    availability: 'Dostępny w pracowni',
+    image: '/src/assets/images/est_local_1794638125069.jpg',
+    shortNote: 'Autorski wyrób wykonany ręcznie w pracowni.',
+    craftDetails: 'Autorski wyrób wykonany ręcznie.',
+    isNew: true,
+  },
+  {
     id: 'soliter-mokotow-585',
     name: 'Soliter „Mokotów” z brylantem',
     category: 'Zaręczynowe',

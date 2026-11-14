@@ -4,9 +4,8 @@ import path from 'path';
 import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
-const BASE_PATH = '/Jubiler-Wo-oska-/';
-
-export default defineConfig(() => {
+export default defineConfig(({command}) => {
+  const BASE_PATH = command === 'build' ? '/Jubiler-Wo-oska-/' : '/';
   return {
     base: BASE_PATH,
     plugins: [
