@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Bell,
+  Box,
   Download,
   ImagePlus,
   KeyRound,
@@ -13,6 +14,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { extract3dEmbedUrl } from '../lib/embed3d';
 import { GEMSTONE_TYPES, PRECIOUS_METALS } from '../data/jewelry';
 import type {
   GemstoneType,
@@ -23,19 +25,14 @@ import type {
 import { resolveMediaUrl } from '../data/mediaAssets';
 import type { ServicePriceItem, SiteContent } from '../data/workshop';
 import {
-  deleteOwnerInquiryData,
   deleteProductData,
   isBackendAvailable,
-  loadOwnerInquiriesData,
   restoreDefaultProductsData,
   saveProductData,
   saveSiteContentData,
   updateStaticOwnerPin,
   verifyOwnerPin,
 } from '../lib/workshopClient';
-import type { ClientInquiry } from '../lib/workshopClient';
-
-type OwnerInquiry = ClientInquiry;
 
 interface OwnerPanelModalProps {
   isOpen: boolean;
@@ -126,6 +123,8 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
   const [prodNote, setProdNote] = useState('');
   const [prodImageDataUrl, setProdImageDataUrl] = useState<string | null>(null);
   const [prodCurrentImage, setProdCurrentImage] = useState<string | null>(null);
+  const [prodModel3dInput, setProdModel3dInput] = useState('');
+  const [show3dPreview, setShow3dPreview] = useState(false);
   const [sendPushOnNew, setSendPushOnNew] = useState(true);
 
   // Editable Site Content Draft
@@ -136,9 +135,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
   const [backendMode, setBackendMode] = useState<'server' | 'static' | null>(null);
   const [newStaticPin, setNewStaticPin] = useState('');
 
-  // Inquiries & Push Broadcast
-  const [inquiries, setInquiries] = useState<OwnerInquiry[]>([]);
-  const [loadingInquiries, setLoadingInquiries] = useState(false);
+  // Push Broadcast
   const [pushTitle, setPushTitle] = useState('Nowość w pracowni Jubiler Wołoska');
   const [pushMessage, setPushMessage] = useState('');
   const [pushCategory, setPushCategory] = useState('Pierścionki');
@@ -153,16 +150,6 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
       setBackendMode(hasBackend ? 'server' : 'static');
     });
   }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen && verifiedPin && activeTab === 'zapytania') {
-      setLoadingInquiries(true);
-      loadOwnerInquiriesData(verifiedPin)
-        .then((items) => setInquiries(items))
-        .catch(() => {})
-        .finally(() => setLoadingInquiries(false));
-    }
-  }, [isOpen, verifiedPin, activeTab]);
 
   if (!isOpen) return null;
 
@@ -246,6 +233,8 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     setProdNote('');
     setProdImageDataUrl(null);
     setProdCurrentImage(null);
+    setProdModel3dInput('');
+    setShow3dPreview(false);
   };
 
   const startEditProduct = (item: JewelryPiece) => {
@@ -263,6 +252,8 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     setProdNote(item.craftDetails || item.shortNote);
     setProdCurrentImage(item.image);
     setProdImageDataUrl(null);
+    setProdModel3dInput(item.model3dUrl || '');
+    setShow3dPreview(false);
     setCatalogSubTab('edit');
   };
 
@@ -274,6 +265,15 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     const isEditing = catalogSubTab === 'edit' && editingId;
     if (!isEditing && !prodImageDataUrl) {
       setErrorMsg('Wybierz zdjęcie biżuterii z telefonu lub komputera.');
+      return;
+    }
+
+    const trimmed3dInput = prodModel3dInput.trim();
+    const parsed3dUrl = trimmed3dInput ? extract3dEmbedUrl(trimmed3dInput) : null;
+    if (trimmed3dInput && !parsed3dUrl) {
+      setErrorMsg(
+        'Wklej prawidłowy kod <iframe> (np. z iJewel3D) lub adres https:// modelu 3D.'
+      );
       return;
     }
 
@@ -292,6 +292,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
         shortNote: prodNote,
         craftDetails: prodNote,
         imageDataUrl: prodImageDataUrl || undefined,
+        model3dUrl: parsed3dUrl || (isEditing ? '' : undefined),
         sendPush: !isEditing && sendPushOnNew,
       });
 
@@ -445,12 +446,6 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
     }
   };
 
-  const handleDeleteInquiry = async (id: string) => {
-    if (!verifiedPin) return;
-    await deleteOwnerInquiryData(verifiedPin, id);
-    setInquiries((prev) => prev.filter((item) => item.id !== id));
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-3 sm:p-4"
@@ -500,8 +495,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
             <div className="flex items-center gap-2 text-sm text-[#57534E]">
               <Lock className="h-4 w-4 text-[#735830] shrink-0" aria-hidden="true" />
               <span>
-                Wpisz kod PIN pracowni, aby edytować cennik, zdjęcia, opisy, kontakt i przeglądać
-                zapytania klientów.
+                Wpisz kod PIN pracowni, aby edytować cennik, zdjęcia, opisy oraz dane kontaktowe.
               </span>
             </div>
             <div>
@@ -541,7 +535,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                   { id: 'cennik', label: 'Cennik' },
                   { id: 'o-pracowni', label: 'O pracowni i Hero' },
                   { id: 'kontakt', label: 'Kontakt i Dojazd' },
-                  { id: 'zapytania', label: 'Zapytania i Push' },
+                  { id: 'zapytania', label: 'Powiadomienia Push' },
                 ] as { id: OwnerTab; label: string }[]
               ).map((tab) => (
                 <button
@@ -684,6 +678,7 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                             <p className="text-sm font-medium text-[#18181B] truncate">{item.name}</p>
                             <p className="text-xs text-[#57534E] truncate tabular-nums">
                               {item.category} · {item.metal} · {item.pricePLN} zł
+                              {item.model3dUrl ? ' · Model 3D' : ''}
                             </p>
                           </div>
                         </div>
@@ -892,6 +887,88 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                         onChange={(e) => setProdNote(e.target.value)}
                         className="w-full border border-[#E6E2D8] bg-white p-3 text-sm text-[#18181B]"
                       />
+                    </div>
+
+                    <div className="border border-[#E6E2D8] bg-white p-4 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label
+                          htmlFor="prod-model-3d-input"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#18181B]"
+                        >
+                          <Box className="h-3.5 w-3.5 text-[#735830]" aria-hidden="true" />
+                          Wizualizacja 3D — wklej kod &lt;iframe&gt; (np. iJewel3D) lub link https:// (opcjonalnie)
+                        </label>
+                        {prodModel3dInput.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProdModel3dInput('');
+                              setShow3dPreview(false);
+                            }}
+                            className="text-[11px] text-[#57534E] hover:text-[#18181B] underline cursor-pointer"
+                          >
+                            Wyczyść pole 3D
+                          </button>
+                        )}
+                      </div>
+
+                      <textarea
+                        id="prod-model-3d-input"
+                        rows={3}
+                        value={prodModel3dInput}
+                        onChange={(e) => setProdModel3dInput(e.target.value)}
+                        placeholder={'<iframe title="model.glb" src="https://ijewel3d.com/drive/files/.../embedded?..." ...></iframe>'}
+                        className="w-full border border-[#E6E2D8] bg-[#FAF9F6] p-3 font-mono text-xs text-[#18181B] focus:border-[#735830] focus:outline-none"
+                      />
+
+                      {(() => {
+                        const raw = prodModel3dInput.trim();
+                        if (!raw) {
+                          return (
+                            <p className="text-[11px] text-[#57534E]">
+                              Możesz wkleić cały kod HTML skopiowany z iJewel3D — adres modelu zostanie
+                              bezpiecznie wyodrębniony i dopasowany do okna galerii.
+                            </p>
+                          );
+                        }
+                        const previewUrl = extract3dEmbedUrl(raw);
+                        if (!previewUrl) {
+                          return (
+                            <p className="text-[11px] text-red-700">
+                              Nie wykryto prawidłowego adresu https://. Upewnij się, że wklejony kod zawiera
+                              atrybut src=&quot;https://...&quot;.
+                            </p>
+                          );
+                        }
+                        return (
+                          <div className="space-y-2.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-[11px] font-medium text-[#735830]">
+                                Wykryto poprawny model 3D gotowy do wyświetlenia w galerii.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setShow3dPreview((prev) => !prev)}
+                                className="border border-[#E6E2D8] bg-[#FAF9F6] px-2.5 py-1 text-[11px] font-medium text-[#18181B] hover:border-[#18181B] cursor-pointer"
+                              >
+                                {show3dPreview ? 'Ukryj podgląd 3D' : 'Pokaż podgląd 3D'}
+                              </button>
+                            </div>
+                            {show3dPreview && (
+                              <div className="aspect-[16/9] w-full overflow-hidden border border-[#E6E2D8] bg-[#F3F1EC]">
+                                <iframe
+                                  src={previewUrl}
+                                  title="Podgląd modelu 3D w panelu właściciela"
+                                  allow="camera; autoplay; clipboard-write; fullscreen; xr-spatial-tracking; web-share"
+                                  allowFullScreen
+                                  loading="lazy"
+                                  className="h-full w-full border-0"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {catalogSubTab === 'add' && (
@@ -1356,22 +1433,6 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-[#18181B] mb-1">
-                        Adres e-mail
-                      </label>
-                      <input
-                        type="email"
-                        value={draftContent.workshopInfo.email}
-                        onChange={(e) =>
-                          setDraftContent((prev) => ({
-                            ...prev,
-                            workshopInfo: { ...prev.workshopInfo, email: e.target.value },
-                          }))
-                        }
-                        className="h-10 w-full border border-[#E6E2D8] bg-[#FAF9F6] px-3 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-[#18181B] mb-1">
                         Ulica i pawilon
                       </label>
                       <input
@@ -1578,53 +1639,6 @@ export const OwnerPanelModal: React.FC<OwnerPanelModalProps> = ({
                     </button>
                   </div>
                 </form>
-
-                <div className="border border-[#E6E2D8] bg-white p-5">
-                  <h3 className="text-lg font-medium text-[#18181B] border-b border-[#E6E2D8] pb-3">
-                    Zapytania o wycenę od klientów ({inquiries.length})
-                  </h3>
-                  {loadingInquiries ? (
-                    <p className="py-6 text-xs text-[#57534E]">Ładowanie zapytań...</p>
-                  ) : inquiries.length === 0 ? (
-                    <p className="py-6 text-xs text-[#57534E]">
-                      Brak nowych zapytań z formularza wyceny.
-                    </p>
-                  ) : (
-                    <ul className="divide-y divide-[#E6E2D8]">
-                      {inquiries.map((inq) => (
-                        <li key={inq.id} className="py-4 space-y-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-xs text-[#57534E]">
-                              <strong className="text-[#18181B]">{inq.name}</strong>
-                              <span aria-hidden="true"> · </span>
-                              <span className="tabular-nums">{inq.id}</span>
-                              <span aria-hidden="true"> · </span>
-                              <span className="tabular-nums">
-                                {new Date(inq.createdAt).toLocaleDateString('pl-PL')}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteInquiry(inq.id)}
-                              className="text-xs text-[#57534E] hover:text-red-700 cursor-pointer"
-                            >
-                              Usuń
-                            </button>
-                          </div>
-                          <p className="text-xs text-[#18181B]">
-                            {inq.category} · {inq.metal} · {inq.gemstone} · Budżet: {inq.budget}
-                            {inq.sizeOrLength ? ` · Rozmiar/długość: ${inq.sizeOrLength}` : ''}
-                          </p>
-                          <p className="text-xs text-[#57534E]">{inq.notes}</p>
-                          <p className="text-xs text-[#735830] tabular-nums">
-                            {inq.phone ? `Tel: ${inq.phone}` : ''}{' '}
-                            {inq.email ? `E-mail: ${inq.email}` : ''}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
               </div>
             )}
           </div>

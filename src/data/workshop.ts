@@ -72,7 +72,7 @@ export const WORKSHOP_INFO: WorkshopInfo = {
   landmark: 'Bazarek Wołoska — róg ul. Wołoskiej i A. E. Odyńca',
   phoneDisplay: '+48 502 579 001',
   phoneHref: 'tel:+48502579001',
-  email: 'kontakt@jubilerwoloska.pl',
+  email: '',
   mapsShortUrl: 'https://maps.app.goo.gl/zGVzuUZWmBH7AUN26',
   mapsDestinationQuery: 'Jubiler Wołoska, Antoniego Edwarda Odyńca pawilon 7, 02-507 Warszawa',
   hoursNote:

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Gem, RotateCcw, X } from 'lucide-react';
+import { ArrowRight, Box, Gem, Image as ImageIcon, RotateCcw, X } from 'lucide-react';
 import {
   GEMSTONE_TYPES,
   PRECIOUS_METALS,
@@ -17,7 +17,7 @@ import type { HeroContent } from '../data/workshop';
 interface GalleryViewProps {
   products: JewelryPiece[];
   heroContent: HeroContent;
-  onRequestPieceQuote: (piece: JewelryPiece) => void;
+  onContactAboutPiece: () => void;
   onNavigateAbout: () => void;
 }
 
@@ -33,7 +33,7 @@ const formatPrice = (price: number) =>
 export const GalleryView: React.FC<GalleryViewProps> = ({
   products,
   heroContent,
-  onRequestPieceQuote,
+  onContactAboutPiece,
   onNavigateAbout,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<'Wszystkie' | ProductCategory>('Wszystkie');
@@ -41,7 +41,18 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
   const [selectedGemstone, setSelectedGemstone] = useState<'Wszystkie kamienie' | GemstoneType>('Wszystkie kamienie');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [activePiece, setActivePiece] = useState<JewelryPiece | null>(null);
+  const [modalMediaMode, setModalMediaMode] = useState<'photo' | '3d'>('photo');
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const openPieceModal = (piece: JewelryPiece) => {
+    setModalMediaMode('photo');
+    setActivePiece(piece);
+  };
+
+  const closePieceModal = () => {
+    setActivePiece(null);
+    setModalMediaMode('photo');
+  };
 
   const filteredItems = useMemo(() => {
     const filtered = products.filter((item) => {
@@ -273,7 +284,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
               >
                 <button
                   type="button"
-                  onClick={() => setActivePiece(piece)}
+                  onClick={() => openPieceModal(piece)}
                   className="block w-full text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#735830]"
                 >
                   <div className="aspect-[4/3] w-full overflow-hidden bg-[#F3F1EC]">
@@ -315,8 +326,9 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
                       <span className="text-sm font-semibold text-[#18181B] tabular-nums">
                         {formatPrice(piece.pricePLN)}
                       </span>
-                      <span className="text-xs text-[#735830] group-hover:underline">
-                        Szczegóły wzoru
+                      <span className="inline-flex items-center gap-1 text-xs text-[#735830] group-hover:underline">
+                        {piece.model3dUrl && <Box className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {piece.model3dUrl ? 'Szczegóły i widok 3D' : 'Szczegóły wzoru'}
                       </span>
                     </div>
                   </div>
@@ -334,25 +346,96 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-piece-title"
-          onClick={() => setActivePiece(null)}
+          onClick={closePieceModal}
         >
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto bg-[#FAF9F6] border border-[#E6E2D8] shadow-2xl"
+            className={`max-h-[92vh] w-full overflow-y-auto bg-[#FAF9F6] border border-[#E6E2D8] shadow-2xl transition-all ${
+              activePiece.model3dUrl && modalMediaMode === '3d' ? 'max-w-5xl' : 'max-w-3xl'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="grid md:grid-cols-12">
-              <div className="bg-[#F3F1EC] md:col-span-6">
-                <div className="aspect-[4/3] md:h-full w-full">
-                  <img
-                    src={resolveMediaUrl(activePiece.image)}
-                    alt={activePiece.name}
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+              <div
+                className={`flex flex-col bg-[#F3F1EC] ${
+                  activePiece.model3dUrl && modalMediaMode === '3d'
+                    ? 'md:col-span-7'
+                    : 'md:col-span-6'
+                }`}
+              >
+                {activePiece.model3dUrl && (
+                  <div
+                    className="flex items-center justify-between gap-2 border-b border-[#E6E2D8] bg-white px-3 py-2"
+                    role="tablist"
+                    aria-label="Tryb podglądu biżuterii"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={modalMediaMode === 'photo'}
+                        onClick={() => setModalMediaMode('photo')}
+                        className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                          modalMediaMode === 'photo'
+                            ? 'border-[#18181B] bg-[#18181B] text-white'
+                            : 'border-[#E6E2D8] bg-[#FAF9F6] text-[#57534E] hover:text-[#18181B]'
+                        }`}
+                      >
+                        <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        Zdjęcie
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={modalMediaMode === '3d'}
+                        onClick={() => setModalMediaMode('3d')}
+                        className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                          modalMediaMode === '3d'
+                            ? 'border-[#735830] bg-[#735830] text-white'
+                            : 'border-[#E6E2D8] bg-[#FAF9F6] text-[#57534E] hover:text-[#18181B]'
+                        }`}
+                      >
+                        <Box className="h-3.5 w-3.5" aria-hidden="true" />
+                        Wizualizacja 3D
+                      </button>
+                    </div>
+                    {modalMediaMode === '3d' && (
+                      <span className="hidden sm:inline text-[11px] text-[#57534E]">
+                        Obracaj i przybliżaj model
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {activePiece.model3dUrl && modalMediaMode === '3d' ? (
+                  <div className="aspect-[4/3] min-h-[320px] md:min-h-[460px] w-full flex-1 bg-[#F3F1EC]">
+                    <iframe
+                      src={activePiece.model3dUrl}
+                      title={`${activePiece.name} — wizualizacja 3D`}
+                      allow="camera; autoplay; clipboard-write; fullscreen; xr-spatial-tracking; web-share"
+                      allowFullScreen
+                      loading="lazy"
+                      className="h-full w-full border-0"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[4/3] md:h-full w-full flex-1">
+                    <img
+                      src={resolveMediaUrl(activePiece.image)}
+                      alt={activePiece.name}
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="p-6 md:p-8 md:col-span-6 flex flex-col justify-between">
+              <div
+                className={`p-6 md:p-8 flex flex-col justify-between ${
+                  activePiece.model3dUrl && modalMediaMode === '3d'
+                    ? 'md:col-span-5'
+                    : 'md:col-span-6'
+                }`}
+              >
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <p className="text-xs text-[#735830] font-medium">
@@ -360,7 +443,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
                     </p>
                     <button
                       type="button"
-                      onClick={() => setActivePiece(null)}
+                      onClick={closePieceModal}
                       aria-label="Zamknij podgląd wzoru"
                       className="p-1 text-[#57534E] hover:text-[#18181B] cursor-pointer"
                     >
@@ -407,13 +490,12 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      const chosen = activePiece;
-                      setActivePiece(null);
-                      onRequestPieceQuote(chosen);
+                      closePieceModal();
+                      onContactAboutPiece();
                     }}
                     className="w-full bg-[#18181B] py-3 text-xs font-medium text-white transition-colors hover:bg-[#27272A] cursor-pointer"
                   >
-                    Zapytaj o wycenę lub rozmiar tego wzoru
+                    Kontakt telefoniczny w sprawie tego wzoru
                   </button>
                 </div>
               </div>

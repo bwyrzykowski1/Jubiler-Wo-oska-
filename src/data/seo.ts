@@ -38,14 +38,14 @@ export const TAB_SEO_METADATA: Record<SeoTabId, TabSeoMetadata> = {
   cennik: {
     tab: 'cennik',
     path: '/cennik',
-    title: 'Jubiler Wołoska — Cennik usług i wycena projektów',
+    title: 'Jubiler Wołoska — Cennik usług złotniczych',
     description:
-      'Sprawdź cennik napraw złotniczych, lutowania i zmiany rozmiaru oraz zamów indywidualną wycenę pierścionka lub naszyjnika na wymiar.',
-    ogTitle: 'Jubiler Wołoska — Cennik usług złotniczych i wycena projektu',
+      'Sprawdź orientacyjny cennik napraw złotniczych, lutowania, zmiany rozmiaru pierścionków oraz realizacji indywidualnych w pracowni Jubiler Wołoska.',
+    ogTitle: 'Jubiler Wołoska — Cennik usług złotniczych i napraw',
     ogDescription:
-      'Orientacyjny cennik lutowania, rodowania, powiększania pierścionków oraz formularz szybkiej wyceny autorskiego projektu biżuterii.',
+      'Orientacyjny cennik lutowania, rodowania, powiększania pierścionków oraz prac autorskich na Mokotowie.',
     keywords:
-      'cennik jubilera warszawa, naprawa biżuterii cena, zmiana rozmiaru pierścionka, wycena projektu biżuterii',
+      'cennik jubilera warszawa, naprawa biżuterii cena, zmiana rozmiaru pierścionka, lutowanie łańcuszka cena',
   },
   dojazd: {
     tab: 'dojazd',

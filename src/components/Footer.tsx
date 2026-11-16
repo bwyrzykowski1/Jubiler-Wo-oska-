@@ -71,7 +71,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => handleNav('cennik')}
                   className="text-[#18181B] hover:text-[#735830] cursor-pointer"
                 >
-                  Cennik i wycena
+                  Cennik usług
                 </button>
               </li>
               <li>

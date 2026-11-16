@@ -192,6 +192,10 @@ export async function saveProductData(
     const idx = current.findIndex((p) => p.id === editingId);
     if (idx === -1) return { ok: false, error: 'Nie znaleziono wyrobu.' };
     const prev = current[idx];
+    const nextModel3dUrl =
+      payload.model3dUrl !== undefined
+        ? payload.model3dUrl.trim() || undefined
+        : prev.model3dUrl;
     const updated: JewelryPiece = {
       ...prev,
       name: payload.name?.trim() || prev.name,
@@ -206,6 +210,7 @@ export async function saveProductData(
       shortNote: payload.shortNote ?? prev.shortNote,
       craftDetails: payload.craftDetails ?? payload.shortNote ?? prev.craftDetails,
       image: payload.imageDataUrl || prev.image,
+      model3dUrl: nextModel3dUrl,
     };
     const next = [...current];
     next[idx] = updated;
@@ -229,6 +234,7 @@ export async function saveProductData(
     leadTime: payload.leadTime || '10–14 dni roboczych',
     availability: payload.availability || 'Dostępny w pracowni',
     image: payload.imageDataUrl,
+    model3dUrl: payload.model3dUrl?.trim() || undefined,
     shortNote: payload.shortNote || 'Autorski wyrób wykonany ręcznie w pracowni.',
     craftDetails: payload.craftDetails || payload.shortNote || 'Autorski wyrób wykonany ręcznie.',
     isNew: true,

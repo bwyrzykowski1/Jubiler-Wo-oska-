@@ -30,7 +30,6 @@ export default function App() {
       : 'galeria'
   );
   const [hasBackend, setHasBackend] = useState<boolean | null>(null);
-  const [prefilledPiece, setPrefilledPiece] = useState<JewelryPiece | null>(null);
   const [products, setProducts] = useState<JewelryPiece[]>(JEWELRY_COLLECTION);
   const [siteContent, setSiteContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
   const [ownerPanelOpen, setOwnerPanelOpen] = useState(false);
@@ -103,19 +102,9 @@ export default function App() {
     };
   }, []);
 
-  const handleRequestPieceQuote = (piece: JewelryPiece) => {
-    setPrefilledPiece(piece);
-    selectTab('cennik');
-    setTimeout(() => {
-      document.getElementById('formularz-wyceny')?.scrollIntoView({ behavior: 'smooth' });
-    }, 80);
-  };
-
-  const handleOpenQuote = () => {
-    selectTab('cennik');
-    setTimeout(() => {
-      document.getElementById('formularz-wyceny')?.scrollIntoView({ behavior: 'smooth' });
-    }, 80);
+  const navigateToTab = (tab: AppTab) => {
+    selectTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -123,8 +112,8 @@ export default function App() {
       <TopNav
         brandName={siteContent.workshopInfo.brandName}
         activeTab={activeTab}
+        phoneHref={siteContent.workshopInfo.phoneHref}
         onSelectTab={selectTab}
-        onOpenQuote={handleOpenQuote}
       />
 
       <main className="flex-1">
@@ -133,11 +122,8 @@ export default function App() {
             <GalleryView
               products={products}
               heroContent={siteContent.heroContent}
-              onRequestPieceQuote={handleRequestPieceQuote}
-              onNavigateAbout={() => {
-                selectTab('o-pracowni');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onContactAboutPiece={() => navigateToTab('kontakt')}
+              onNavigateAbout={() => navigateToTab('o-pracowni')}
             />
             <PushNotificationPanel
               isSubscribed={push.isSubscribed}
@@ -156,11 +142,8 @@ export default function App() {
         {activeTab === 'o-pracowni' && (
           <AboutView
             aboutContent={siteContent.aboutContent}
-            onNavigateQuote={handleOpenQuote}
-            onNavigateDirections={() => {
-              selectTab('dojazd');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onNavigateContact={() => navigateToTab('kontakt')}
+            onNavigateDirections={() => navigateToTab('dojazd')}
           />
         )}
 
@@ -169,8 +152,9 @@ export default function App() {
             servicePrices={siteContent.servicePrices}
             bespokePrices={siteContent.bespokePrices}
             phoneDisplay={siteContent.workshopInfo.phoneDisplay}
-            prefilledPiece={prefilledPiece}
-            onClearPrefill={() => setPrefilledPiece(null)}
+            phoneHref={siteContent.workshopInfo.phoneHref}
+            onNavigateContact={() => navigateToTab('kontakt')}
+            onNavigateDirections={() => navigateToTab('dojazd')}
           />
         )}
 
@@ -179,11 +163,8 @@ export default function App() {
         {activeTab === 'kontakt' && (
           <ContactView
             workshopInfo={siteContent.workshopInfo}
-            onNavigateDirections={() => {
-              selectTab('dojazd');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateQuote={handleOpenQuote}
+            onNavigateDirections={() => navigateToTab('dojazd')}
+            onNavigatePricing={() => navigateToTab('cennik')}
           />
         )}
       </main>

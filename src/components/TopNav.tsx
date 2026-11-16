@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, Phone, X } from 'lucide-react';
 
 export type AppTab = 'galeria' | 'o-pracowni' | 'cennik' | 'dojazd' | 'kontakt';
 
 interface TopNavProps {
   brandName: string;
   activeTab: AppTab;
+  phoneHref: string;
   onSelectTab: (tab: AppTab) => void;
-  onOpenQuote: () => void;
 }
 
 const NAV_ITEMS: { id: AppTab; label: string }[] = [
@@ -21,8 +21,8 @@ const NAV_ITEMS: { id: AppTab; label: string }[] = [
 export const TopNav: React.FC<TopNavProps> = ({
   brandName,
   activeTab,
+  phoneHref,
   onSelectTab,
-  onOpenQuote,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -74,16 +74,14 @@ export const TopNav: React.FC<TopNavProps> = ({
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              onOpenQuote();
-            }}
-            className="hidden sm:inline-flex items-center bg-[#18181B] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#27272A] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#735830]"
+          <a
+            href={phoneHref}
+            onClick={() => setMobileMenuOpen(false)}
+            className="hidden sm:inline-flex items-center gap-1.5 bg-[#18181B] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#27272A] whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#735830]"
           >
-            Wycena projektu
-          </button>
+            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+            Zadzwoń
+          </a>
 
           <button
             type="button"
@@ -116,16 +114,14 @@ export const TopNav: React.FC<TopNavProps> = ({
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenQuote();
-              }}
-              className="mt-3 flex h-11 w-full items-center justify-center bg-[#18181B] text-xs font-medium text-white cursor-pointer"
+            <a
+              href={phoneHref}
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2 bg-[#18181B] text-xs font-medium text-white"
             >
-              Wycena projektu
-            </button>
+              <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+              Zadzwoń do pracowni
+            </a>
           </nav>
         </div>
       )}

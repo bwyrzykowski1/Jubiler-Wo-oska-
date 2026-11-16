@@ -4,13 +4,13 @@ import type { AboutContent } from '../data/workshop';
 
 interface AboutViewProps {
   aboutContent: AboutContent;
-  onNavigateQuote: () => void;
+  onNavigateContact: () => void;
   onNavigateDirections: () => void;
 }
 
 export const AboutView: React.FC<AboutViewProps> = ({
   aboutContent,
-  onNavigateQuote,
+  onNavigateContact,
   onNavigateDirections,
 }) => {
   return (
@@ -33,10 +33,10 @@ export const AboutView: React.FC<AboutViewProps> = ({
           <div className="mt-8 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={onNavigateQuote}
+              onClick={onNavigateContact}
               className="bg-[#18181B] px-5 py-2.5 text-xs font-medium text-white transition-colors hover:bg-[#27272A] cursor-pointer whitespace-nowrap"
             >
-              Zamów wycenę projektu
+              Kontakt z pracownią
             </button>
             <button
               type="button"

@@ -11,6 +11,7 @@ import type { JewelryPiece } from './src/data/jewelry.ts';
 import { resolveTabFromPathname, TAB_SEO_METADATA } from './src/data/seo.ts';
 import { DEFAULT_SITE_CONTENT } from './src/data/workshop.ts';
 import type { SiteContent } from './src/data/workshop.ts';
+import { extract3dEmbedUrl } from './src/lib/embed3d.ts';
 
 const require = createRequire(import.meta.url);
 const webpush = require('web-push') as typeof import('web-push');
@@ -455,6 +456,13 @@ async function createApp() {
       return;
     }
 
+    const rawModel3d = typeof body.model3dUrl === 'string' ? body.model3dUrl.trim() : '';
+    const validatedModel3d = rawModel3d ? extract3dEmbedUrl(rawModel3d) : null;
+    if (rawModel3d && !validatedModel3d) {
+      res.status(400).json({ error: 'Nieprawidłowy adres lub kod <iframe> modelu 3D (wymagany link https://).' });
+      return;
+    }
+
     const category = body.category || 'Pierścionki';
     const metal = body.metal || 'Złoto żółte 585';
     const gemstone = body.gemstone || 'Diament / Brylant';
@@ -474,6 +482,7 @@ async function createApp() {
       leadTime: String(body.leadTime || '10–14 dni roboczych').trim(),
       availability: body.availability || 'Dostępny w pracowni',
       image: savedImage,
+      model3dUrl: validatedModel3d || undefined,
       shortNote,
       craftDetails: String(body.craftDetails || shortNote).trim(),
       isNew: true,
@@ -548,6 +557,21 @@ async function createApp() {
         ? Math.round(Number(body.pricePLN))
         : existing.pricePLN;
 
+    let nextModel3dUrl = existing.model3dUrl;
+    if (body.model3dUrl !== undefined) {
+      const rawModel3d = String(body.model3dUrl || '').trim();
+      if (!rawModel3d) {
+        nextModel3dUrl = undefined;
+      } else {
+        const validated = extract3dEmbedUrl(rawModel3d);
+        if (!validated) {
+          res.status(400).json({ error: 'Nieprawidłowy adres lub kod <iframe> modelu 3D (wymagany link https://).' });
+          return;
+        }
+        nextModel3dUrl = validated;
+      }
+    }
+
     const updated: JewelryPiece = {
       ...existing,
       name: body.name !== undefined ? String(body.name).trim() || existing.name : existing.name,
@@ -570,6 +594,7 @@ async function createApp() {
           : existing.craftDetails,
       isNew: body.isNew !== undefined ? Boolean(body.isNew) : existing.isNew,
       image: nextImage,
+      model3dUrl: nextModel3dUrl,
     };
 
     catalog[idx] = updated;

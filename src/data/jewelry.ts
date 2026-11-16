@@ -27,6 +27,7 @@ export interface JewelryPiece {
   leadTime: string;
   availability: 'Dostępny w pracowni' | 'Na zamówienie' | 'Pojedynczy egzemplarz';
   image: string;
+  model3dUrl?: string;
   shortNote: string;
   craftDetails: string;
   isNew?: boolean;

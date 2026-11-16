@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { Check, Clock, Copy, Mail, MapPin, Phone } from 'lucide-react';
+import { Check, Clock, Copy, MapPin, Phone } from 'lucide-react';
 import type { WorkshopInfo } from '../data/workshop';
 
 interface ContactViewProps {
   workshopInfo: WorkshopInfo;
   onNavigateDirections: () => void;
-  onNavigateQuote: () => void;
+  onNavigatePricing: () => void;
 }
 
 export const ContactView: React.FC<ContactViewProps> = ({
   workshopInfo,
   onNavigateDirections,
-  onNavigateQuote,
+  onNavigatePricing,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -52,12 +52,6 @@ export const ContactView: React.FC<ContactViewProps> = ({
             <p className="mt-3 text-sm text-[#57534E] leading-relaxed">
               {workshopInfo.hoursNote}
             </p>
-            {workshopInfo.email && (
-              <p className="mt-4 inline-flex items-center gap-2 text-xs text-[#57534E]">
-                <Mail className="h-3.5 w-3.5 text-[#735830]" aria-hidden="true" />
-                <span>{workshopInfo.email}</span>
-              </p>
-            )}
           </div>
 
           <div className="mt-8 space-y-3">
@@ -109,10 +103,10 @@ export const ContactView: React.FC<ContactViewProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={onNavigateQuote}
+                    onClick={onNavigatePricing}
                     className="border border-[#E6E2D8] px-4 py-2 text-xs font-medium text-[#57534E] transition-colors hover:border-[#18181B] hover:text-[#18181B] cursor-pointer"
                   >
-                    Formularz wyceny projektu
+                    Zobacz orientacyjny cennik
                   </button>
                 </div>
               </div>
