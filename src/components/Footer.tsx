@@ -111,7 +111,7 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#E6E2D8] pt-6 text-xs text-[#57534E]">
           <p>© {new Date().getFullYear()} {workshopInfo.fullTitle}</p>
           <div className="flex flex-wrap items-center gap-4">
-            <span>Mokotów · Ręczne złotnictwo i oprawa kamieni szlachetnych</span>
+            <span>Mokotów · Złotnictwo, modelowanie 3D i druk 3D biżuterii</span>
             <button
               type="button"
               onClick={onOpenOwnerPanel}

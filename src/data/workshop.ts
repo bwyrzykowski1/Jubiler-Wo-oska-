@@ -148,6 +148,12 @@ export const BESPOKE_PRICES: ServicePriceItem[] = [
     price: 'od 2 900 zł / para',
     turnaround: '14–21 dni',
   },
+  {
+    service: 'Modelowanie 3D (CAD) i druk 3D prototypu biżuterii',
+    details: 'Projekt cyfrowy, wizualizacja 3D oraz precyzyjny wydruk w wosku odlewniczym lub żywicy',
+    price: 'wycena indywidualna',
+    turnaround: '3–7 dni',
+  },
 ];
 
 export const CRAFT_TECHNIQUES: CraftTechnique[] = [
@@ -165,9 +171,9 @@ export const CRAFT_TECHNIQUES: CraftTechnique[] = [
   },
   {
     index: '03.',
-    title: 'Metoda traconego wosku i modelowanie',
+    title: 'Modelowanie 3D, druk 3D i metoda traconego wosku',
     description:
-      'Dla form rzeźbiarskich i finezyjnych koron rzeźbimy prototyp w twardym wosku jubilerskim, który następnie odlewamy w złocie próby 585 lub platynie 950 i wykańczamy ręcznie pilnikami igłowymi.',
+      'Tworzymy precyzyjne modele biżuterii w technologii 3D (CAD) oraz wykonujemy wydruki 3D w wosku odlewniczym i żywicy — dzięki temu możesz zobaczyć i przymierzyć prototyp przed odlaniem w złocie próby 585 lub platynie 950.',
   },
   {
     index: '04.',
@@ -192,13 +198,18 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     leadParagraph:
       'Pracownia Jubilerska Jubiler Wołoska przy ul. Wołoskiej / Antoniego Edwarda Odyńca, pawilon 7 to kameralny warsztat na warszawskim Mokotowie. Łączymy klasyczne techniki ręcznego złotnictwa z indywidualnym podejściem do każdego kamienia i projektu.',
     secondaryParagraph:
-      'W naszej pracowni rozmawiasz bezpośrednio z wykonawcą Twojej biżuterii — od doboru próby złota czy platyny, przez weryfikację certyfikatów kamieni, aż po przymiarki i późniejszą bezpłatną kontrolę opraw.',
+      'W naszej pracowni rozmawiasz bezpośrednio z wykonawcą Twojej biżuterii — łączymy klasyczne złotnictwo z nowoczesnym modelowaniem 3D i drukiem 3D prototypów, dzięki czemu każdy projekt możesz zobaczyć i dopracować przed finalnym odlewem.',
     image: '/src/assets/images/atelier_craft_bench_1794550928298.jpg',
     pillars: [
       {
         title: 'Biżuteria na zamówienie',
         description:
           'Projektujemy i wykonujemy od podstaw pierścionki zaręczynowe, autorskie naszyjniki oraz obrączki dopasowane do proporcji dłoni i indywidualnego budżetu.',
+      },
+      {
+        title: 'Modelowanie 3D i druk 3D biżuterii',
+        description:
+          'Tworzymy cyfrowe modele biżuterii (CAD) oraz precyzyjne wydruki 3D w wosku jubilerskim i żywicy — zarówno do własnych realizacji odlewniczych, jak i jako samodzielną usługę projektową.',
       },
       {
         title: 'Naprawy i korekty',

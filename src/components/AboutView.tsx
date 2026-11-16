@@ -63,7 +63,7 @@ export const AboutView: React.FC<AboutViewProps> = ({
       {/* What We Do */}
       <section className="py-14 border-b border-[#E6E2D8]">
         <h2 className="text-3xl font-medium text-[#18181B]">Czym się zajmujemy</h2>
-        <div className="mt-8 grid gap-8 md:grid-cols-3">
+        <div className="mt-8 grid gap-8 md:grid-cols-2">
           {aboutContent.pillars.map((pillar, idx) => (
             <div key={`${pillar.title}-${idx}`} className="border border-[#E6E2D8] bg-white p-6">
               <h3 className="text-xl font-medium text-[#18181B]">{pillar.title}</h3>

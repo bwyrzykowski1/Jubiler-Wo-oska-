@@ -26,14 +26,14 @@ export const TAB_SEO_METADATA: Record<SeoTabId, TabSeoMetadata> = {
   'o-pracowni': {
     tab: 'o-pracowni',
     path: '/o-pracowni',
-    title: 'Jubiler Wołoska — O pracowni i technikach złotniczych',
+    title: 'Jubiler Wołoska — O pracowni, modelowaniu 3D i druku 3D',
     description:
-      'Poznaj historię pracowni Jubiler Wołoska przy ul. Odyńca i techniki ręcznego kucia, oprawy mikroskopowej oraz renowacji biżuterii.',
-    ogTitle: 'Jubiler Wołoska — O pracowni i rzemiośle złotniczym',
+      'Poznaj historię pracowni Jubiler Wołoska przy ul. Odyńca, techniki ręcznego złotnictwa, oprawę mikroskopową oraz modelowanie 3D i druk 3D biżuterii.',
+    ogTitle: 'Jubiler Wołoska — O pracowni, złotnictwie i druku 3D biżuterii',
     ogDescription:
-      'Kameralny warsztat złotniczy na Mokotowie. Dowiedz się, jak powstają nasze projekty od wosku i ręcznego kucia po oprawę kamieni.',
+      'Kameralny warsztat złotniczy na Mokotowie. Ręczne kucie, modelowanie 3D (CAD), druk 3D w wosku i żywicy oraz oprawa kamieni szlachetnych.',
     keywords:
-      'złotnik mokotów, techniki jubilerskie, ręczne kucie złota, oprawa kamieni szlachetnych, historia pracowni',
+      'złotnik mokotów, modelowanie 3d biżuterii, druk 3d biżuterii warszawa, techniki jubilerskie, ręczne kucie złota',
   },
   cennik: {
     tab: 'cennik',
