@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import type { Request, Response } from 'express';
 import fs from 'node:fs';
+import http from 'node:http';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -814,11 +815,18 @@ async function createApp() {
 
   const SPA_ROUTES = ['/', '/galeria', '/o-pracowni', '/cennik', '/dojazd', '/kontakt'];
   const isProduction = process.env.NODE_ENV === 'production';
+  const httpServer = http.createServer(app);
 
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
+    const disableHmr = process.env.DISABLE_HMR === 'true';
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        allowedHosts: true,
+        hmr: disableHmr ? false : { server: httpServer },
+        ws: { server: httpServer },
+      },
       appType: 'spa',
     });
 
@@ -845,7 +853,7 @@ async function createApp() {
   }
 
   const port = Number(process.env.PORT || 3000);
-  app.listen(port, '0.0.0.0', () => {
+  httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Jubiler Wołoska server listening on http://0.0.0.0:${port}`);
   });
 }
