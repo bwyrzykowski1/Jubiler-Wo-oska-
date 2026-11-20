@@ -64,6 +64,24 @@ export const WORKSHOP_BENCH_IMAGE = '/src/assets/images/atelier_craft_bench_1794
 
 export const JEWELRY_COLLECTION: JewelryPiece[] = [
   {
+    id: 'local-1795202829775',
+    name: 'Jezus',
+    category: 'Pierścionki',
+    metal: 'Złoto żółte 585',
+    gemstone: 'Diament / Brylant',
+    gemstoneSpecs: 'Diament / Brylant',
+    weightGrams: '—',
+    pricePLN: 1000000,
+    leadTime: '10–14 dni roboczych',
+    availability: 'Dostępny w pracowni',
+    image: '/src/assets/images/jezus_local_1795202829775.jpg',
+    model3dUrl:
+      'https://ijewel3d.com/drive/files/Nbx00KwKTw-_wumOvB9tmw/embedded?slug=Nbx00KwKTw-_wumOvB9tmw&isTitle=true&isRemoveHologram=false&isRemoveLogo=false&isRemoveLogoLink=false&isRemoveLoadingBgImg=true&isShowPrompt=true&isTurntableAnimation=false&isAutoplay=false&isTransparentBackground=false&isConfigurator=true&isEnabledZoom=true&isShare=true&isShowModelInfo=false&isQuality=true&isResetView=true&isRotateCamera=true&isPlayCameraViews=true&isPlayAnimations=true&isFitObject=true&isFullScreen=true',
+    shortNote: 'Autorski wyrób wykonany ręcznie w pracowni.',
+    craftDetails: 'Autorski wyrób wykonany ręcznie.',
+    isNew: true,
+  },
+  {
     id: 'local-1794638125069',
     name: 'Est',
     category: 'Pierścionki',
